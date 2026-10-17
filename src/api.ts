@@ -1,7 +1,8 @@
 import {invoke} from '@tauri-apps/api/core';
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {open, save} from '@tauri-apps/plugin-dialog';
-import {revealItemInDir} from '@tauri-apps/plugin-opener';
+import {getVersion} from '@tauri-apps/api/app';
+import {openUrl, revealItemInDir} from '@tauri-apps/plugin-opener';
 import type {
   Course,
   CourseContent,
@@ -58,6 +59,8 @@ export const api = {
     return typeof res === 'string' ? res : null;
   },
   reveal: (path: string) => revealItemInDir(path),
+  openUrl: (url: string) => openUrl(url),
+  appVersion: () => getVersion(),
   onProgress: (cb: (p: Progress) => void): Promise<UnlistenFn> =>
     listen<Progress>('download-progress', (e) => cb(e.payload)),
 };

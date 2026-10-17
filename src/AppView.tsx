@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {ActionBar} from './components/ActionBar';
 import {ConnectScreen} from './components/ConnectScreen';
+import {AboutDialog} from './components/AboutDialog';
 import {ContentDialog} from './components/ContentDialog';
 import {CourseList} from './components/CourseList';
 import {CourseToolbar} from './components/CourseToolbar';
@@ -38,6 +39,7 @@ export function AppView({settings, setSettings, session, setSession}: Props) {
   const [sort, setSort] = useState<Sort>('name');
   const [showSettings, setShowSettings] = useState(false);
   const [showDeadlines, setShowDeadlines] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [detail, setDetail] = useState<Course | null>(null);
   const [cache, setCache] = useState<Record<string, CourseContent>>({});
   const [excluded, setExcluded] = useState<Record<string, string[]>>({});
@@ -221,6 +223,7 @@ export function AppView({settings, setSettings, session, setSession}: Props) {
         onSettings={() => setShowSettings(true)}
         onDeadlines={() => setShowDeadlines(true)}
         onLogout={logout}
+        onAbout={() => setShowAbout(true)}
       />
 
       {(stage === 'connect' || stage === 'restoring') && (
@@ -283,6 +286,7 @@ export function AppView({settings, setSettings, session, setSession}: Props) {
         />
       )}
 
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
       {showDeadlines && <DeadlinesDialog onError={handleError} onClose={() => setShowDeadlines(false)} />}
 
       {detail && (

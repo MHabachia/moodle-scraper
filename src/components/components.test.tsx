@@ -1,8 +1,10 @@
 import {cleanup, fireEvent, render, screen} from '@testing-library/react';
 import {afterEach, describe, expect, it, vi} from 'vitest';
+import {api} from '../api';
 import type {Course, CoursePreview, DownloadSummary} from '../api';
 import {I18nProvider} from '../i18n';
 import {DEFAULT_GLOBAL, DEFAULT_SITE, type Settings} from '../utils';
+import {AboutDialog} from './AboutDialog';
 import {ActionBar} from './ActionBar';
 import {CourseCard} from './CourseCard';
 import {dueLabel} from './DeadlinesDialog';
@@ -227,5 +229,18 @@ describe('helpers', () => {
     expect(dueLabel(t, now + 3600, now)).toBe('heute');
     expect(dueLabel(t, now + 86_400 + 5, now)).toBe('morgen');
     expect(dueLabel(t, now + 3 * 86_400 + 5, now)).toBe('in 3 Tagen');
+  });
+});
+
+describe('AboutDialog', () => {
+  it('shows purpose, tech stack and version, and closes', async () => {
+    vi.spyOn(api, 'appVersion').mockResolvedValue('9.9.9');
+    const onClose = vi.fn();
+    wrap(<AboutDialog onClose={onClose} />);
+    expect(screen.getByText('Über Moodle Scraper')).toBeTruthy();
+    expect(screen.getByText(/Tauri 2 mit Rust-Kern/)).toBeTruthy();
+    expect(await screen.findByText('Version 9.9.9')).toBeTruthy();
+    fireEvent.click(screen.getByText('Schließen'));
+    expect(onClose).toHaveBeenCalled();
   });
 });

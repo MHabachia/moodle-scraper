@@ -1,4 +1,4 @@
-import {CalendarClock, ChevronRight, LogOut, Monitor, Moon, RefreshCw, Settings as SettingsIcon, Sun} from 'lucide-react';
+import {CalendarClock, ChevronRight, Info, LogOut, Monitor, Moon, RefreshCw, Settings as SettingsIcon, Sun} from 'lucide-react';
 import type {SessionInfo} from '../api';
 import {useT, type Key} from '../i18n';
 import {Logo} from '../Logo';
@@ -17,6 +17,7 @@ export function TopBar(props: {
   onSettings: () => void;
   onDeadlines: () => void;
   onLogout: () => void;
+  onAbout: () => void;
 }) {
   const t = useT();
   const next = {system: 'light', light: 'dark', dark: 'system'} as const;
@@ -87,6 +88,9 @@ export function TopBar(props: {
             </button>
           </>
         )}
+        <button className={btnGhost} onClick={props.onAbout} title={t('topbar.about')} aria-label={t('topbar.about')}>
+          <Info className="h-4 w-4" />
+        </button>
         <button
           className={btnGhost}
           onClick={() => props.onTheme(next[props.theme])}
