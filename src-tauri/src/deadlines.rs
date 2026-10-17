@@ -8,6 +8,16 @@ use std::path::Path;
 use tauri::State;
 
 const ONE_DAY: i64 = 86_400;
+/// Moodle erlaubt für diese Abfrage höchstens 50 Einträge.
+const EVENT_LIMIT: u32 = 50;
+
+fn event_args(now: i64) -> serde_json::Value {
+    serde_json::json!({
+        "timesortfrom": now - ONE_DAY,
+        "limitnum": EVENT_LIMIT,
+        "limittononsuspendedevents": true
+    })
+}
 
 fn id_string(v: &serde_json::Value) -> String {
     match v {
@@ -52,23 +62,15 @@ pub fn parse_events(data: &serde_json::Value, now: i64) -> Vec<Deadline> {
 pub async fn list_deadlines(state: State<'_, AppState>) -> Result<Vec<Deadline>, String> {
     let ctx = state.ctx()?;
     let now = now_ts();
-    let data = ajax(
-        &ctx,
-        "core_calendar_get_action_events_by_timesort",
-        serde_json::json!({
-            "timesortfrom": now - ONE_DAY,
-            "limitnum": 100,
-            "limittononsuspendedevents": true
-        }),
-    )
-    .await
-    .map_err(|e| {
-        if e == SESSION_EXPIRED {
-            e
-        } else {
-            format!("Fristen nicht verfügbar: {e}")
-        }
-    })?;
+    let data = ajax(&ctx, "core_calendar_get_action_events_by_timesort", event_args(now))
+        .await
+        .map_err(|e| {
+            if e == SESSION_EXPIRED {
+                e
+            } else {
+                format!("Fristen nicht verfügbar: {e}")
+            }
+        })?;
     Ok(parse_events(&data, now))
 }
 
@@ -82,6 +84,13 @@ pub fn export_ics(path: String, deadlines: Vec<Deadline>) -> Result<(), String> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn event_request_stays_within_moodle_limit() {
+        let args = event_args(1_000_000);
+        assert!(args["limitnum"].as_u64().unwrap() <= 50);
+        assert_eq!(args["timesortfrom"], 1_000_000 - ONE_DAY);
+    }
 
     #[test]
     fn parses_sorts_and_filters_events() {
