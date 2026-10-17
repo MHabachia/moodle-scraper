@@ -1,0 +1,47 @@
+[package]
+name = "moodle-scraper"
+version = "1.1.0"
+description = "Moodle Scraper - lädt Moodle-Kursmaterialien pauschal herunter (macOS & Windows)"
+authors = ["MHabachia"]
+license = "MIT"
+repository = "https://github.com/MHabachia/moodle-scraper"
+homepage = "https://github.com/MHabachia/moodle-scraper"
+readme = "../README.md"
+keywords = ["moodle", "download", "desktop", "tauri"]
+categories = ["gui"]
+edition = "2021"
+rust-version = "1.80"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-notification = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream", "cookies"] }
+futures-util = "0.3"
+scraper = "0.27"
+regex = "1.10"
+zip = { version = "9.0", default-features = false, features = ["deflate"] }
+percent-encoding = "2"
+unicode-normalization = "0.1"
+fs4 = "1.1.0"
+keyring = { version = "3", features = ["apple-native", "windows-native"] }
+ts-rs = "12.0.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+xattr = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+
+[dev-dependencies]
+tokio = { version = "1", features = ["net", "io-util", "rt-multi-thread", "macros", "time"] }

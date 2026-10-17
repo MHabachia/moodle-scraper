@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Sicherheitslücke melden
+    url: https://github.com/MHabachia/moodle-scraper/security/advisories/new
+    about: Bitte Sicherheitslücken nicht als öffentliches Issue melden.

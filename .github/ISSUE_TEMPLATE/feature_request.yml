@@ -1,0 +1,15 @@
+name: Wunsch oder Idee
+description: Eine neue Funktion oder Verbesserung vorschlagen
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idee
+    attributes:
+      label: Was soll die App können?
+      description: Beschreibe das Problem, das du lösen möchtest, nicht nur die Lösung.
+    validations:
+      required: true
+  - type: textarea
+    id: alternativen
+    attributes:
+      label: Wie machst du es bisher?

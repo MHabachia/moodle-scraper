@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Moodle Scraper",
+  "version": "1.1.0",
+  "identifier": "com.moodle.scraper",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Moodle Scraper",
+        "width": 1100,
+        "height": 760,
+        "minWidth": 820,
+        "minHeight": 560,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost",
+      "devCsp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost ws://localhost:5173 http://localhost:5173"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "dmg",
+      "nsis"
+    ],
+    "category": "Education",
+    "shortDescription": "Moodle-Kursmaterialien pauschal herunterladen",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "11.0",
+      "hardenedRuntime": false
+    },
+    "publisher": "MHabachia",
+    "copyright": "© 2026 MHabachia",
+    "longDescription": "Lädt die Dateien deiner Moodle-Kurse gesammelt herunter, als Ordner oder ZIP. Beim nächsten Mal nur das, was neu ist."
+  }
+}

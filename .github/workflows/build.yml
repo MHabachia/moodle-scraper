@@ -1,0 +1,92 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
+
+  build:
+    needs: tests
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target universal-apple-darwin'
+          - platform: windows-latest
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Cache Rust
+        uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and publish release
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Moodle Scraper ${{ github.ref_name }}'
+          releaseBody: |
+            Installer für macOS (`.dmg`, Apple Silicon und Intel) und Windows (`-setup.exe`, ohne Admin-Rechte). Was sich geändert hat, steht im [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md).
+
+            Die Programme sind nicht mit einem bezahlten Zertifikat signiert, daher warnt das System beim ersten Start:
+
+            - macOS: Rechtsklick auf die App, „Öffnen“. Falls das nicht reicht: `xattr -dr com.apple.quarantine "/Applications/Moodle Scraper.app"`
+            - Windows: in SmartScreen auf „Weitere Informationen“ und „Trotzdem ausführen“ klicken.
+
+            Mit `SHA256SUMS.txt` lässt sich der Download prüfen.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  checksums:
+    name: Prüfsummen
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Prüfsummen erzeugen und ans Release hängen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir dl && cd dl
+          gh release download "$TAG" --repo "$REPO" --pattern '*.dmg' --pattern '*.exe'
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          gh release upload "$TAG" SHA256SUMS.txt --repo "$REPO" --clobber

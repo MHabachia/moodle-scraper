@@ -1,0 +1,40 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet
+labels: [bug]
+body:
+  - type: textarea
+    id: was
+    attributes:
+      label: Was ist passiert?
+      description: Beschreibe kurz, was du gemacht hast, was passiert ist und was du erwartet hast.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version der App
+      placeholder: z. B. 1.0.1
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: Betriebssystem
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows 11
+        - Windows 10
+    validations:
+      required: true
+  - type: input
+    id: moodle
+    attributes:
+      label: Moodle-Version oder Design
+      description: Falls bekannt (steht oft ganz unten auf der Moodle-Seite).
+  - type: textarea
+    id: diagnose
+    attributes:
+      label: Diagnose
+      description: Einstellungen, Werkzeuge, „Diagnose exportieren“. Der Inhalt enthält keine Passwörter. Bitte trotzdem kurz prüfen, bevor du ihn einfügst.
+      render: text

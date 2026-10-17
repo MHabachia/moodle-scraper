@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+# Von ts-rs erzeugt, nicht von Hand ändern
+src/generated/** linguist-generated=true
+
+# Binärdateien
+*.png binary
+*.ico binary
+*.icns binary
