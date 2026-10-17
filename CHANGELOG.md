@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+
+- Neue Info-Seite („Über die App“) mit Zweck, Technik, Version und Link zum Quellcode, erreichbar über das Info-Symbol in der oberen Leiste.
+
 ## 1.1.1
 
 - Fristen: Die Abfrage an Moodle fragte zu viele Einträge auf einmal an und scheiterte mit „Limit must be between 1 and 50“. Sie ist jetzt auf 50 begrenzt.
