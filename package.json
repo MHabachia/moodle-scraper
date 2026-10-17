@@ -1,6 +1,6 @@
 {
   "name": "moodle-scraper",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Desktop-App (macOS & Windows) zum pauschalen Herunterladen von Moodle-Kursmaterialien",
   "author": "MHabachia",
