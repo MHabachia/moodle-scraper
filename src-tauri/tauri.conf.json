@@ -37,7 +37,8 @@
     "shortDescription": "Moodle-Kursmaterialien pauschal herunterladen",
     "windows": {
       "nsis": {
-        "installMode": "currentUser"
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico"
       }
     },
     "icon": [

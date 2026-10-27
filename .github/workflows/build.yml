@@ -66,7 +66,7 @@ jobs:
 
             Die Programme sind nicht mit einem bezahlten Zertifikat signiert, daher warnt das System beim ersten Start:
 
-            - macOS: Rechtsklick auf die App, „Öffnen“. Falls das nicht reicht: `xattr -dr com.apple.quarantine "/Applications/Moodle Scraper.app"`
+            - macOS: App öffnen, die Meldung schließen, dann unter Systemeinstellungen → Datenschutz & Sicherheit auf „Trotzdem öffnen“ klicken (ältere Versionen: Rechtsklick, „Öffnen“)
             - Windows: in SmartScreen auf „Weitere Informationen“ und „Trotzdem ausführen“ klicken.
 
             Mit `SHA256SUMS.txt` lässt sich der Download prüfen. Die übrigen Dateien (`latest.json`, `.app.tar.gz`) braucht nur die automatische Update-Funktion der App.
@@ -77,6 +77,23 @@ jobs:
           updaterJsonPreferNsis: true
           uploadUpdaterSignatures: false
           args: ${{ matrix.args }}
+
+      # Die App wird von Tauri ad-hoc signiert. Ist die Signatur kaputt, meldet macOS "beschädigt"
+      # statt der normalen Freigabe unter "Datenschutz & Sicherheit"; das fällt hier sofort auf.
+      - name: macOS-App prüfen
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          DMG=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg)
+          mkdir -p "$RUNNER_TEMP/mnt" "$RUNNER_TEMP/app"
+          hdiutil attach -nobrowse -readonly -mountpoint "$RUNNER_TEMP/mnt" "$DMG"
+          cp -R "$RUNNER_TEMP/mnt/Moodle Scraper.app" "$RUNNER_TEMP/app/"
+          hdiutil detach "$RUNNER_TEMP/mnt"
+          APP="$RUNNER_TEMP/app/Moodle Scraper.app"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dv "$APP" 2>&1 | grep -q 'Signature=adhoc'
+          lipo -archs "$APP/Contents/MacOS/moodle-scraper" | grep -q arm64
+          lipo -archs "$APP/Contents/MacOS/moodle-scraper" | grep -q x86_64
 
   checksums:
     name: Prüfsummen
