@@ -20,7 +20,8 @@ Es braucht weder einen API-Token noch Admin-Rechte. Die App benutzt dieselben Se
 - Mehrere Downloads parallel, mit Wiederholungen bei Fehlern. Läuft die Anmeldung mitten im Download ab, kannst du dich neu anmelden und genau dort weitermachen.
 - Fristen und Termine aus dem Moodle-Kalender, exportierbar als `.ics`.
 - Optional: angemeldet bleiben (Passwortspeicher des Systems), im Tray weiterlaufen, automatisch synchronisieren.
-- Oberfläche auf Deutsch und Englisch, helles und dunkles Design.
+- Automatische Updates: Die App sucht beim Start nach einer neuen Version (abschaltbar) und installiert sie nach deiner Bestätigung.
+- Oberfläche auf Deutsch und Englisch, helles und dunkles Design. Im Info-Dialog stehen Zweck, Version und Technik.
 
 ## Installation
 
@@ -28,13 +29,15 @@ Die fertigen Installer gibt es unter [Releases](../../releases):
 
 | System | Datei |
 |---|---|
-| macOS (Apple Silicon und Intel) | `.dmg` |
+| macOS 11 oder neuer (Apple Silicon und Intel) | `.dmg` |
 | Windows 10/11 | `-setup.exe` (Installation nur für den eigenen Benutzer) |
 
 Die Programme sind nicht mit einem bezahlten Entwicklerzertifikat signiert, deshalb warnt das System beim ersten Start:
 
 - **macOS:** App nach `/Applications` ziehen und öffnen. Kommt die Meldung, dass der Entwickler nicht überprüft werden kann, die Meldung schließen und unter *Systemeinstellungen → Datenschutz & Sicherheit* auf „Trotzdem öffnen“ klicken. Auf älteren macOS-Versionen reicht Rechtsklick und „Öffnen“. Die App ist ad-hoc signiert, ein Terminal-Befehl ist nicht nötig.
 - **Windows:** In der SmartScreen-Meldung auf „Weitere Informationen“ und „Trotzdem ausführen“ klicken.
+
+Spätere Versionen installiert die App auf Wunsch selbst. Wer eine ältere Version ohne Update-Funktion hat (bis 1.2.0), installiert einmal von Hand neu.
 
 Zu jedem Release gehört eine `SHA256SUMS.txt`, mit der du den Download prüfen kannst:
 
@@ -107,7 +110,7 @@ Der Ablauf im Einzelnen, die Module und die Entscheidungen dahinter stehen in [d
 src/                        Frontend
   App.tsx, AppView.tsx      Wurzel (Session, Einstellungen, Sprache) und Ablauf
   components/               Bildschirme und Dialoge
-  hooks/                    useSettings, useDownload, useAutoSync
+  hooks/                    useSettings, useDownload, useAutoSync, useUpdater
   i18n/                     Deutsch und Englisch
   lib/                      Filter, Sortierung, Aufbau des Download-Auftrags
   generated/                TypeScript-Typen aus Rust (von ts-rs, nicht von Hand ändern)
@@ -139,8 +142,10 @@ Voraussetzungen: Node 22.12 oder neuer, Rust (stable). Unter Windows wird WebVie
 ```bash
 npm install
 npm run tauri dev       # Entwicklungsmodus
-npm run tauri build     # Installer für das aktuelle System
+npm run tauri build -- --config '{"bundle":{"createUpdaterArtifacts":false}}'   # Installer für das aktuelle System
 ```
+
+Die Option schaltet die Update-Pakete ab. Ohne sie verlangt `tauri build` den privaten Update-Schlüssel (`TAURI_SIGNING_PRIVATE_KEY`), den nur das Release in GitHub Actions kennt.
 
 Tests und Prüfungen:
 
@@ -154,7 +159,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
 `cargo test` braucht vorher `npm run build`, weil Tauri das gebaute Frontend einbindet. Außerdem schreibt der Testlauf die TypeScript-Typen nach `src/generated/`; die CI prüft, dass sie zum Rust-Code passen.
 
-**Release:** Version in `package.json`, `src-tauri/Cargo.toml` und `src-tauri/tauri.conf.json` anheben, den Eintrag im `CHANGELOG.md` ergänzen und einen Tag `vX.Y.Z` pushen. Der Workflow `build.yml` startet bei dem Tag, lässt zuerst `tests.yml` laufen, baut dann macOS und Windows, veröffentlicht das Release mit den Installern und der `SHA256SUMS.txt`. Dazu kommen `latest.json` und das macOS-Update-Paket, die nur die Update-Funktion der App braucht. Sie werden mit dem Schlüssel aus dem GitHub-Secret `TAURI_SIGNING_PRIVATE_KEY` signiert; der öffentliche Schlüssel steht in `tauri.conf.json`.
+**Release:** Version in `package.json`, `src-tauri/Cargo.toml` und `src-tauri/tauri.conf.json` anheben, den Eintrag im `CHANGELOG.md` ergänzen (ein Test prüft, dass alle Versionen und der oberste Changelog-Eintrag übereinstimmen) und einen Tag `vX.Y.Z` pushen. Der Workflow `build.yml` startet bei dem Tag, lässt zuerst `tests.yml` laufen, baut dann macOS und Windows, veröffentlicht das Release mit den Installern und der `SHA256SUMS.txt`. Dazu kommen `latest.json` und das macOS-Update-Paket, die nur die Update-Funktion der App braucht. Sie werden mit dem Schlüssel aus dem GitHub-Secret `TAURI_SIGNING_PRIVATE_KEY` signiert; der öffentliche Schlüssel steht in `tauri.conf.json`.
 
 ## Sicherheit
 
@@ -165,6 +170,7 @@ Die wichtigsten Punkte, Details in [SECURITY.md](SECURITY.md):
 - Programme und Makro-Dokumente werden nur geladen, wenn du das einschaltest, und dann als „aus dem Internet“ markiert.
 - Dateinamen und Zielordner werden geprüft, damit nichts außerhalb des Zielordners landet.
 - „Angemeldet bleiben“ ist aus, solange du es nicht einschaltest.
+- Updates kommen nur von diesem GitHub-Projekt und werden vor der Installation mit einem eingebauten Schlüssel geprüft. Die App darf außerdem keine beliebigen Web-Adressen öffnen, nur die Projektseite.
 
 ## Grenzen
 
@@ -172,7 +178,7 @@ Die wichtigsten Punkte, Details in [SECURITY.md](SECURITY.md):
 - Nicht unterstützt: Seiten, Bücher, Forenanhänge, eingebettete Videoplayer.
 - Fehlermeldungen aus dem Backend gibt es nur auf Deutsch, die Oberfläche ist zweisprachig.
 - Auto-Sync läuft nur, solange die App läuft (auch im Tray) und angemeldet ist.
-- Updates: Die App sucht beim Start nach einer neuen Version (abschaltbar) und installiert sie nach deiner Bestätigung. Die Update-Pakete sind signiert, die Installer selbst nicht.
+- Die Installer sind nicht mit einem bezahlten Zertifikat signiert, daher die Warnungen beim ersten Start. Die Update-Pakete sind mit einem eigenen Schlüssel signiert.
 
 ## Hinweise zur Nutzung
 

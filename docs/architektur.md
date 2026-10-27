@@ -66,6 +66,7 @@ Jeder Name aus Moodle wird als Pfadbestandteil bereinigt: verbotene Zeichen weg,
 - `hooks/useSettings.ts` lädt und speichert die Einstellungen in `localStorage` und wendet das Design an. Sie bestehen aus einem globalen Teil (Sprache, Design, zuletzt benutzte Adresse) und einem Profil je Moodle-Instanz (Zielordner, Format, Dateitypen, ...). Gespeichert wird mit einer Versionsnummer, ältere Stände werden beim Laden umgewandelt.
 - `hooks/useDownload.ts` kapselt den Ablauf Analysieren, Vorschau, Download, Wiederholen und Neuanmelden. Die Kurse werden mit bis zu drei Workern gleichzeitig gescannt.
 - `hooks/useAutoSync.ts` löst den regelmäßigen Hintergrund-Sync aus.
+- `hooks/useUpdater.ts` sucht über `tauri-plugin-updater` nach einer neuen Version und installiert sie nach Bestätigung (nicht während eines Downloads). Die Suche beim Start lässt sich in den Einstellungen abschalten.
 - `lib/` enthält reine Funktionen (Filtern und Sortieren der Kurse, Aufbau des Auftrags fürs Backend), die sich leicht testen lassen.
 - `i18n/` hat die Texte auf Deutsch (`de.ts`, Referenz) und Englisch (`en.ts`). Der Typ erzwingt, dass beide dieselben Schlüssel haben.
 - `components/` enthält die Bildschirme und Dialoge, `ui.tsx` gemeinsame Bausteine wie Modal und Buttons.
@@ -101,5 +102,6 @@ Jeder Name aus Moodle wird als Pfadbestandteil bereinigt: verbotene Zeichen weg,
 ## Build, CI und Release
 
 - `tests.yml` läuft bei jedem Push und Pull Request und besteht aus drei Jobs: TypeScript-Typprüfung, Frontend-Tests (Vitest) und Rust-Tests auf macOS und Windows. Im Rust-Job laufen außerdem Clippy, die Formatprüfung und der Abgleich der erzeugten TypeScript-Typen.
-- `build.yml` startet bei einem Tag `v*` oder von Hand. Es ruft zuerst `tests.yml` auf, baut dann mit `tauri-action` die Installer für macOS (universal) und Windows, veröffentlicht das Release mit dem `.dmg` und dem `-setup.exe` und hängt eine `SHA256SUMS.txt` an.
+- `build.yml` startet nur bei einem Tag `v*`, damit kein Release ohne Version entsteht. Es ruft zuerst `tests.yml` auf, baut dann mit `tauri-action` die Installer für macOS (universal) und Windows und veröffentlicht das Release mit dem `.dmg` und dem `-setup.exe`. Auf macOS prüft ein Schritt die ad-hoc-Signatur und beide Architekturen der App. Danach kommt eine `SHA256SUMS.txt` ans Release.
+- Updates: Die Pakete werden mit dem Schlüssel aus dem Secret `TAURI_SIGNING_PRIVATE_KEY` signiert. `tauri-action` legt `latest.json` und das macOS-Paket (`.app.tar.gz`) ins Release. Die App fragt `releases/latest/download/latest.json` ab, vergleicht die Version und prüft die Signatur mit dem öffentlichen Schlüssel aus `tauri.conf.json`.
 - Die Actions sind auf Commit-SHAs festgelegt.

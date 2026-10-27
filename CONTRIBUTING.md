@@ -23,6 +23,8 @@ npm install
 npm run tauri dev
 ```
 
+Einen lokalen Installer baust du mit `npm run tauri build -- --config '{"bundle":{"createUpdaterArtifacts":false}}'`. Ohne die Option verlangt Tauri den privaten Update-Schlüssel, den nur das Release in GitHub Actions kennt.
+
 Vor einem Pull Request sollte alles durchlaufen:
 
 ```bash
