@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1
+
+- Der Windows-Installer und die Deinstallation zeigen jetzt das App-Icon statt des Standard-Icons des Installers.
+- Externe Links sind auf die Projektseite beschränkt; die App kann keine beliebigen Adressen mehr öffnen.
+- Installationshinweis für macOS ohne Terminal-Befehl (Freigabe unter „Datenschutz & Sicherheit“).
+- Kleine Abhängigkeits-Updates und zusätzliche Tests.
+
 ## 1.3.0
 
 - Automatische Updates: Die App sucht beim Start nach einer neuen Version (in den Einstellungen abschaltbar), zeigt einen Hinweis und installiert nach Bestätigung. Im Info-Dialog lässt sich manuell suchen. Während eines Downloads ist das Installieren gesperrt.

@@ -1,6 +1,6 @@
 [package]
 name = "moodle-scraper"
-version = "1.3.0"
+version = "1.3.1"
 description = "Moodle Scraper - lädt Moodle-Kursmaterialien pauschal herunter (macOS & Windows)"
 authors = ["MHabachia"]
 license = "MIT"
