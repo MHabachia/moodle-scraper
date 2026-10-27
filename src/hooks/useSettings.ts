@@ -14,6 +14,7 @@ export function useSettings(host: string) {
       language: stored.language,
       rememberLogin: stored.rememberLogin,
       background: stored.background,
+      autoUpdate: stored.autoUpdate,
       ...resolveSite(stored, host),
     }),
     [stored, host],

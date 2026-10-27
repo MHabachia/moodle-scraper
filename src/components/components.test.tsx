@@ -5,6 +5,7 @@ import type {Course, CoursePreview, DownloadSummary} from '../api';
 import {I18nProvider} from '../i18n';
 import {DEFAULT_GLOBAL, DEFAULT_SITE, type Settings} from '../utils';
 import {AboutDialog} from './AboutDialog';
+import {UpdateBanner} from './UpdateBanner';
 import {ActionBar} from './ActionBar';
 import {CourseCard} from './CourseCard';
 import {dueLabel} from './DeadlinesDialog';
@@ -236,11 +237,38 @@ describe('AboutDialog', () => {
   it('shows purpose, tech stack and version, and closes', async () => {
     vi.spyOn(api, 'appVersion').mockResolvedValue('9.9.9');
     const onClose = vi.fn();
-    wrap(<AboutDialog onClose={onClose} />);
+    wrap(<AboutDialog update={{status: 'idle'}} busy={false} onCheck={() => {}} onInstall={() => {}} onClose={onClose} />);
     expect(screen.getByText('Über Moodle Scraper')).toBeTruthy();
     expect(screen.getByText(/Tauri 2 mit Rust-Kern/)).toBeTruthy();
     expect(await screen.findByText('Version 9.9.9')).toBeTruthy();
     fireEvent.click(screen.getByText('Schließen'));
     expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('Update', () => {
+  it('banner offers the install and blocks it during a download', () => {
+    const onInstall = vi.fn();
+    const {rerender} = wrap(<UpdateBanner state={{status: 'available', version: '2.0.0'}} busy={false} onInstall={onInstall} />);
+    expect(screen.getByText('Version 2.0.0 ist verfügbar.')).toBeTruthy();
+    fireEvent.click(screen.getByText('Jetzt aktualisieren'));
+    expect(onInstall).toHaveBeenCalledTimes(1);
+    rerender(
+      <I18nProvider setting="de">
+        <UpdateBanner state={{status: 'available', version: '2.0.0'}} busy onInstall={onInstall} />
+      </I18nProvider>,
+    );
+    expect((screen.getByText('Jetzt aktualisieren') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('banner stays hidden without an update and the about dialog can check manually', () => {
+    wrap(<UpdateBanner state={{status: 'none'}} busy={false} onInstall={() => {}} />);
+    expect(screen.queryByText('Jetzt aktualisieren')).toBeNull();
+    cleanup();
+    const onCheck = vi.fn();
+    wrap(<AboutDialog update={{status: 'none'}} busy={false} onCheck={onCheck} onInstall={() => {}} onClose={() => {}} />);
+    expect(screen.getByText('Du nutzt die neueste Version.')).toBeTruthy();
+    fireEvent.click(screen.getByText('Nach Updates suchen'));
+    expect(onCheck).toHaveBeenCalled();
   });
 });

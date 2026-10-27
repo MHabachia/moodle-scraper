@@ -18,4 +18,4 @@ Bitte keine Sicherheitslücken als öffentliches Issue melden. Nutze stattdessen
 ## Bekannte Grenzen
 
 - Die Installer sind nicht mit einem Entwicklerzertifikat signiert (macOS nur ad-hoc). Die Prüfsummen liegen jedem Release als `SHA256SUMS.txt` bei.
-- Es gibt keinen automatischen Updater. Neue Versionen müssen von Hand installiert werden.
+- Die App sucht beim Start nach Updates (in den Einstellungen abschaltbar). Sie fragt dazu nur `github.com/MHabachia/moodle-scraper` ab und installiert erst nach deiner Bestätigung. Update-Pakete werden mit einem eigenen Schlüssel signiert und vor der Installation geprüft; der öffentliche Schlüssel ist in die App eingebaut. Gelangt der private Schlüssel in fremde Hände, könnten Updates untergeschoben werden. Er liegt deshalb nur als GitHub-Secret und in einer privaten Sicherung des Entwicklers.
