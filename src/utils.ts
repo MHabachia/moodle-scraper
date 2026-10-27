@@ -93,6 +93,8 @@ export interface GlobalSettings {
   rememberLogin: boolean;
   /** Beim Schließen in den Tray minimieren */
   background: boolean;
+  /** Beim Start still nach einer neuen Version suchen */
+  autoUpdate: boolean;
 }
 
 export type Settings = GlobalSettings & SiteSettings;
@@ -129,9 +131,10 @@ export const DEFAULT_GLOBAL: GlobalSettings = {
   language: 'auto',
   rememberLogin: false,
   background: false,
+  autoUpdate: true,
 };
 
-const GLOBAL_KEYS = ['moodleUrl', 'recentUrls', 'theme', 'language', 'rememberLogin', 'background'] as const;
+const GLOBAL_KEYS = ['moodleUrl', 'recentUrls', 'theme', 'language', 'rememberLogin', 'background', 'autoUpdate'] as const;
 
 export const DIR_PRESETS = [
   {id: 'sections', tpl: '{section}/{folder}'},

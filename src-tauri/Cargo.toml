@@ -1,6 +1,6 @@
 [package]
 name = "moodle-scraper"
-version = "1.2.0"
+version = "1.3.0"
 description = "Moodle Scraper - lädt Moodle-Kursmaterialien pauschal herunter (macOS & Windows)"
 authors = ["MHabachia"]
 license = "MIT"
@@ -33,6 +33,8 @@ unicode-normalization = "0.1"
 fs4 = "1.1.0"
 keyring = { version = "3", features = ["apple-native", "windows-native"] }
 ts-rs = "12.0.1"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 xattr = "1"

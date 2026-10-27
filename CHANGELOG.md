@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Automatische Updates: Die App sucht beim Start nach einer neuen Version (in den Einstellungen abschaltbar), zeigt einen Hinweis und installiert nach Bestätigung. Im Info-Dialog lässt sich manuell suchen. Während eines Downloads ist das Installieren gesperrt.
+- Die Update-Pakete sind signiert. Die Release-Dateien umfassen deshalb zusätzlich `latest.json` und ein macOS-Update-Paket.
+- Wer noch 1.2.0 oder älter nutzt, installiert 1.3.0 einmal von Hand.
+
 ## 1.2.0
 
 - Neue Info-Seite („Über die App“) mit Zweck, Technik, Version und Link zum Quellcode, erreichbar über das Info-Symbol in der oberen Leiste.

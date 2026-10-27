@@ -269,6 +269,12 @@ export function SettingsDialog(props: {
               checked={s.background}
               onChange={(v) => props.onChange({background: v})}
             />
+            <Toggle
+              label={t('settings.autoUpdate')}
+              hint={t('settings.autoUpdateHint')}
+              checked={s.autoUpdate}
+              onChange={(v) => props.onChange({autoUpdate: v})}
+            />
           </div>
         </Section>
 

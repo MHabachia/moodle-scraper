@@ -80,6 +80,7 @@ Die Einstellungen (Zielordner, Ordner oder ZIP, Dateitypen und mehr) gelten pro 
 | App-Rahmen | [Tauri 2](https://tauri.app) (Rust-Kern mit Webview, ohne eingebauten Browser) |
 | Backend | Rust: `reqwest` (HTTP, Cookies), `scraper` (HTML), `tokio` (async), `zip`, `keyring`, `fs4` |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, lucide-react |
+| Updates | `tauri-plugin-updater`: signierte Pakete, `latest.json` im neuesten GitHub-Release |
 | Schnittstelle | Tauri-Befehle und Events; die TypeScript-Typen erzeugt `ts-rs` aus den Rust-Typen |
 | Tests | `cargo test` (Unit-, Integrations- und Ende-zu-Ende-Tests gegen ein nachgebautes Moodle), Vitest mit Testing Library |
 | CI/CD | GitHub Actions: `tests.yml` (Typen, Frontend- und Rust-Tests) und `build.yml` (Installer für macOS und Windows) |
@@ -154,7 +155,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
 `cargo test` braucht vorher `npm run build`, weil Tauri das gebaute Frontend einbindet. Außerdem schreibt der Testlauf die TypeScript-Typen nach `src/generated/`; die CI prüft, dass sie zum Rust-Code passen.
 
-**Release:** Version in `package.json`, `src-tauri/Cargo.toml` und `src-tauri/tauri.conf.json` anheben, den Eintrag im `CHANGELOG.md` ergänzen und einen Tag `vX.Y.Z` pushen. Der Workflow `build.yml` startet bei dem Tag, lässt zuerst `tests.yml` laufen, baut dann macOS und Windows, veröffentlicht das Release mit den Installern und der `SHA256SUMS.txt`. Von Hand lässt er sich über „Run workflow“ starten.
+**Release:** Version in `package.json`, `src-tauri/Cargo.toml` und `src-tauri/tauri.conf.json` anheben, den Eintrag im `CHANGELOG.md` ergänzen und einen Tag `vX.Y.Z` pushen. Der Workflow `build.yml` startet bei dem Tag, lässt zuerst `tests.yml` laufen, baut dann macOS und Windows, veröffentlicht das Release mit den Installern und der `SHA256SUMS.txt`. Dazu kommen `latest.json` und das macOS-Update-Paket, die nur die Update-Funktion der App braucht. Sie werden mit dem Schlüssel aus dem GitHub-Secret `TAURI_SIGNING_PRIVATE_KEY` signiert; der öffentliche Schlüssel steht in `tauri.conf.json`.
 
 ## Sicherheit
 
@@ -172,7 +173,7 @@ Die wichtigsten Punkte, Details in [SECURITY.md](SECURITY.md):
 - Nicht unterstützt: Seiten, Bücher, Forenanhänge, eingebettete Videoplayer.
 - Fehlermeldungen aus dem Backend gibt es nur auf Deutsch, die Oberfläche ist zweisprachig.
 - Auto-Sync läuft nur, solange die App läuft (auch im Tray) und angemeldet ist.
-- Es gibt keinen automatischen Updater.
+- Updates: Die App sucht beim Start nach einer neuen Version (abschaltbar) und installiert sie nach deiner Bestätigung. Die Update-Pakete sind signiert, die Installer selbst nicht.
 
 ## Hinweise zur Nutzung
 

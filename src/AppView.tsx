@@ -11,9 +11,11 @@ import {PreviewDialog} from './components/PreviewDialog';
 import {ProgressDialog} from './components/ProgressDialog';
 import {SettingsDialog} from './components/SettingsDialog';
 import {TopBar} from './components/TopBar';
+import {UpdateBanner} from './components/UpdateBanner';
 import {api, errorMessage, LOGIN_WINDOW_CLOSED, SESSION_EXPIRED, type Course, type CourseContent, type SessionInfo} from './api';
 import {useAutoSync} from './hooks/useAutoSync';
 import {useDownload} from './hooks/useDownload';
+import {useUpdater} from './hooks/useUpdater';
 import {useT} from './i18n';
 import {countByFilter, visibleCourses} from './lib/courses';
 import {ensureNotificationPermission, notify} from './notify';
@@ -75,6 +77,8 @@ export function AppView({settings, setSettings, session, setSession}: Props) {
     onError: handleError,
     onMessage: setError,
   });
+
+  const updater = useUpdater(settings.autoUpdate);
 
   // Kursliste laden (zuletzt gewählte Kurse vorauswählen)
   const loadCourses = useCallback(
@@ -225,6 +229,7 @@ export function AppView({settings, setSettings, session, setSession}: Props) {
         onLogout={logout}
         onAbout={() => setShowAbout(true)}
       />
+      <UpdateBanner state={updater.state} busy={dl.phase !== 'idle'} onInstall={() => void updater.install()} />
 
       {(stage === 'connect' || stage === 'restoring') && (
         <ConnectScreen
@@ -286,7 +291,15 @@ export function AppView({settings, setSettings, session, setSession}: Props) {
         />
       )}
 
-      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
+      {showAbout && (
+        <AboutDialog
+          update={updater.state}
+          busy={dl.phase !== 'idle'}
+          onCheck={() => void updater.checkNow()}
+          onInstall={() => void updater.install()}
+          onClose={() => setShowAbout(false)}
+        />
+      )}
       {showDeadlines && <DeadlinesDialog onError={handleError} onClose={() => setShowDeadlines(false)} />}
 
       {detail && (

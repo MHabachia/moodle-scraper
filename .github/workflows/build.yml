@@ -55,6 +55,9 @@ jobs:
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signiert die Update-Pakete; der öffentliche Schlüssel steht in tauri.conf.json
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Moodle Scraper ${{ github.ref_name }}'
@@ -66,9 +69,13 @@ jobs:
             - macOS: Rechtsklick auf die App, „Öffnen“. Falls das nicht reicht: `xattr -dr com.apple.quarantine "/Applications/Moodle Scraper.app"`
             - Windows: in SmartScreen auf „Weitere Informationen“ und „Trotzdem ausführen“ klicken.
 
-            Mit `SHA256SUMS.txt` lässt sich der Download prüfen.
+            Mit `SHA256SUMS.txt` lässt sich der Download prüfen. Die übrigen Dateien (`latest.json`, `.app.tar.gz`) braucht nur die automatische Update-Funktion der App.
           releaseDraft: false
           prerelease: false
+          # latest.json enthält die Signaturen; einzelne .sig-Dateien braucht das Release nicht
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          uploadUpdaterSignatures: false
           args: ${{ matrix.args }}
 
   checksums:
