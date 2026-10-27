@@ -1,16 +1,27 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Berechtigungen des Hauptfensters",
+  "description": "Berechtigungen des Hauptfensters. Externe Links sind auf die Projektseite beschränkt.",
   "windows": [
     "main"
   ],
   "permissions": [
     "core:default",
     "dialog:default",
-    "opener:default",
     "notification:default",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://github.com/MHabachia/moodle-scraper"
+        },
+        {
+          "url": "https://github.com/MHabachia/moodle-scraper/*"
+        }
+      ]
+    },
+    "opener:allow-reveal-item-in-dir"
   ]
 }

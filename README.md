@@ -33,8 +33,7 @@ Die fertigen Installer gibt es unter [Releases](../../releases):
 
 Die Programme sind nicht mit einem bezahlten Entwicklerzertifikat signiert, deshalb warnt das System beim ersten Start:
 
-- **macOS:** App nach `/Applications` ziehen, mit Rechtsklick auf „Öffnen“ starten. Falls das nicht reicht:
-  `xattr -dr com.apple.quarantine "/Applications/Moodle Scraper.app"`
+- **macOS:** App nach `/Applications` ziehen und öffnen. Kommt die Meldung, dass der Entwickler nicht überprüft werden kann, die Meldung schließen und unter *Systemeinstellungen → Datenschutz & Sicherheit* auf „Trotzdem öffnen“ klicken. Auf älteren macOS-Versionen reicht Rechtsklick und „Öffnen“. Die App ist ad-hoc signiert, ein Terminal-Befehl ist nicht nötig.
 - **Windows:** In der SmartScreen-Meldung auf „Weitere Informationen“ und „Trotzdem ausführen“ klicken.
 
 Zu jedem Release gehört eine `SHA256SUMS.txt`, mit der du den Download prüfen kannst:
