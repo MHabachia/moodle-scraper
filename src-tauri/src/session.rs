@@ -5,8 +5,10 @@ use crate::log;
 use crate::parse::{is_logged_in, parse_courses_html, parse_sesskey, parse_user};
 use crate::secure;
 use crate::types::{Course, SessionInfo};
-use crate::util::{is_private_host, lock, normalize_url, redact};
+use crate::util::{is_private_host, is_private_ip, lock, normalize_url, redact};
 use reqwest::cookie::{CookieStore, Jar};
+use reqwest::dns::{Addrs, Name, Resolve, Resolving};
+use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -16,6 +18,37 @@ use tauri::{AppHandle, Manager, State, Url, WebviewUrl, WebviewWindowBuilder};
 pub const USER_AGENT: &str = concat!("MoodleScraper/", env!("CARGO_PKG_VERSION"));
 pub const LOGIN_WINDOW: &str = "login";
 pub const SESSION_EXPIRED: &str = "SESSION_EXPIRED";
+
+/// Löst Namen auf und lässt dabei nur öffentliche Adressen zu, außer für den Moodle-Host selbst
+/// (der darf auch in einem Uni-Netz liegen). Das schützt davor, dass ein Name auf eine interne
+/// Adresse zeigt, etwa bei einer Weiterleitung oder einem Datei-Link.
+struct PublicOnlyResolver {
+    allowed_host: String,
+}
+
+/// Behält nur öffentliche Adressen, wenn der Host nicht ausdrücklich erlaubt ist.
+pub(crate) fn filter_addrs(addrs: Vec<SocketAddr>, allowed: bool) -> Vec<SocketAddr> {
+    if allowed {
+        addrs
+    } else {
+        addrs.into_iter().filter(|a| !is_private_ip(a.ip())).collect()
+    }
+}
+
+impl Resolve for PublicOnlyResolver {
+    fn resolve(&self, name: Name) -> Resolving {
+        let host = name.as_str().to_string();
+        let allowed = host.eq_ignore_ascii_case(&self.allowed_host);
+        Box::pin(async move {
+            let found: Vec<SocketAddr> = tokio::net::lookup_host((host.as_str(), 0)).await?.collect();
+            let usable = filter_addrs(found, allowed);
+            if usable.is_empty() {
+                return Err("Adresse zeigt auf ein internes Netz (blockiert)".into());
+            }
+            Ok(Box::new(usable.into_iter()) as Addrs)
+        })
+    }
+}
 
 #[derive(Clone)]
 pub struct Ctx {
@@ -37,6 +70,9 @@ impl Ctx {
         }
 
         let base_host = base.host_str().unwrap_or_default().to_string();
+        let resolver = Arc::new(PublicOnlyResolver {
+            allowed_host: base_host.clone(),
+        });
         // Weiterleitungen nur zum selben Host oder zu öffentlichen https-Adressen, nie in interne Netze
         let policy = reqwest::redirect::Policy::custom(move |attempt| {
             if attempt.previous().len() >= 10 {
@@ -53,6 +89,7 @@ impl Ctx {
         let builder = |redirect: reqwest::redirect::Policy| {
             reqwest::Client::builder()
                 .user_agent(USER_AGENT)
+                .dns_resolver(resolver.clone())
                 .cookie_provider(jar.clone())
                 .redirect(redirect)
                 .connect_timeout(Duration::from_secs(20))
@@ -92,8 +129,9 @@ impl Ctx {
         self.client_no_redirect.get(url.clone())
     }
 
+    /// Für Moodles AJAX-Schnittstelle: sie antwortet direkt, eine Weiterleitung wäre ein Fehler.
     pub fn post(&self, url: &Url) -> reqwest::RequestBuilder {
-        self.client.post(url.clone())
+        self.client_no_redirect.post(url.clone())
     }
 }
 
@@ -407,4 +445,45 @@ async fn list_courses_html(ctx: &Ctx) -> Result<Vec<Course>, String> {
         }
     }
     Ok(vec![])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::testutil::{resp, spawn};
+
+    fn addr(ip: &str) -> SocketAddr {
+        format!("{ip}:0").parse().unwrap()
+    }
+
+    #[test]
+    fn resolver_filter_drops_internal_addresses_for_foreign_hosts() {
+        let mixed = vec![
+            addr("8.8.8.8"),
+            addr("127.0.0.1"),
+            addr("10.0.0.5"),
+            addr("[::ffff:7f00:1]"),
+        ];
+        assert_eq!(filter_addrs(mixed.clone(), false), vec![addr("8.8.8.8")]);
+        assert!(filter_addrs(vec![addr("192.168.0.1")], false).is_empty());
+        // Der Moodle-Host selbst darf auch in einem internen Netz liegen
+        assert_eq!(filter_addrs(mixed.clone(), true), mixed);
+    }
+
+    #[tokio::test]
+    async fn ajax_does_not_follow_redirects() {
+        let other = spawn(|_| {
+            resp(
+                200,
+                &[("Content-Type", "application/json")],
+                br#"[{"error":false,"data":{}}]"#,
+            )
+        })
+        .await;
+        let location = format!("http://{other}/lib/ajax/service.php");
+        let moodle = spawn(move |_| resp(302, &[("Location", location.as_str())], b"")).await;
+        let ctx = Ctx::new(Url::parse(&format!("http://{moodle}/")).unwrap(), "MoodleSession=abc").unwrap();
+        let r = ajax(&ctx, "core_session_touch", serde_json::json!({})).await;
+        assert!(r.is_err(), "Weiterleitung darf nicht gefolgt werden");
+    }
 }

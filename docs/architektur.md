@@ -53,6 +53,7 @@ Im Zielordner liegt `.moodle-scraper-index.json`. Der Schlüssel eines Eintrags 
 ### Fehler und Überlast
 
 - Netzwerkfehler und 5xx-Antworten werden bis zu dreimal wiederholt, mit wachsender Wartezeit.
+- Zugriffe auf andere Hosts als Moodle (etwa ein Datei-CDN nach einer Weiterleitung) gehen nur über https an öffentliche Adressen. Ein eigener Namensauflöser verwirft Treffer in internen Netzen, auch für IPv4-in-IPv6. Der Moodle-Host selbst ist ausgenommen, damit eine Instanz im Uni-Netz funktioniert. Moodles AJAX-Schnittstelle wird ohne Weiterleitungen aufgerufen.
 - Antwortet der Server mit 429 oder 503, halbiert die App die Zahl der gleichzeitigen Downloads (mindestens 1) und beachtet `Retry-After`.
 - Liefert Moodle statt einer Datei die Anmeldeseite, ist die Session abgelaufen. Der Lauf stoppt, alle noch offenen Dateien werden als Fehler mit ihren Daten gemeldet, und das Frontend bietet an, sich neu anzumelden und mit genau diesen Dateien weiterzumachen.
 

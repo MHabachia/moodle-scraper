@@ -8,13 +8,20 @@ on:
 permissions:
   contents: read
 
+# Nie zwei Releases gleichzeitig bauen; ein laufender Build wird nicht abgebrochen
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   tests:
     name: Tests
     uses: ./.github/workflows/tests.yml
 
   build:
+    name: Installer (${{ matrix.label }})
     needs: tests
+    timeout-minutes: 60
     permissions:
       contents: write
     strategy:
@@ -22,8 +29,10 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
+            label: macOS
             args: '--target universal-apple-darwin'
           - platform: windows-latest
+            label: Windows
             args: ''
 
     runs-on: ${{ matrix.platform }}
@@ -98,6 +107,7 @@ jobs:
   checksums:
     name: Prüfsummen
     needs: build
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     permissions:
       contents: write

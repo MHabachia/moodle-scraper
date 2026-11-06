@@ -152,6 +152,10 @@ fn private_hosts_are_detected() {
         "169.254.169.254",
         "100.64.0.1",
         "[::1]",
+        "[::ffff:127.0.0.1]",
+        "[::ffff:10.0.0.1]",
+        "[::ffff:192.168.1.1]",
+        "[::ffff:169.254.169.254]",
         "fd00::1",
         "fe80::1",
         "printer.local",
@@ -159,7 +163,13 @@ fn private_hosts_are_detected() {
     ] {
         assert!(is_private_host(h), "{h} sollte privat sein");
     }
-    for h in ["moodle.uni.de", "8.8.8.8", "172.32.0.1", "2001:db8::1"] {
+    for h in [
+        "moodle.uni.de",
+        "8.8.8.8",
+        "172.32.0.1",
+        "2001:db8::1",
+        "[::ffff:8.8.8.8]",
+    ] {
         assert!(!is_private_host(h), "{h} sollte öffentlich sein");
     }
     assert!(is_local_host("localhost") && is_local_host("127.0.0.1") && !is_local_host("10.0.0.1"));

@@ -395,6 +395,25 @@ async fn skips_files_over_size_limit() {
 }
 
 #[tokio::test]
+async fn size_limit_also_applies_without_content_length() {
+    // Antwort ohne Content-Length, Ende durch Schließen der Verbindung
+    let mut body = b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n".to_vec();
+    body.extend_from_slice(&[0u8; 4096]);
+    let addr = spawn(move |_| body.clone()).await;
+    let dir = tmpdir("nolen");
+    let t = task(format!("http://{addr}/big.bin"), "big.bin", dir.join("f.part"));
+    let opts = Opts {
+        max_bytes: Some(1024),
+        ..OPTS
+    };
+    let r = run_task(&ctx_for(addr), &t, opts, &AtomicBool::new(false), &shared())
+        .await
+        .unwrap();
+    assert!(matches!(r, Done::Skipped));
+    assert!(!dir.join("f.part").exists(), "angefangene Datei muss weg");
+}
+
+#[tokio::test]
 async fn cancel_flag_stops_before_request() {
     let addr = spawn(|_| panic!("darf nicht abgefragt werden")).await;
     let dir = tmpdir("cancel");
