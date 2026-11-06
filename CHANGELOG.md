@@ -4,6 +4,7 @@
 
 - Behoben: Bei langen Kurs- und Ordnernamen landeten die Dateien eines Moodle-Ordners in mehreren unterschiedlich gekürzten Ordnern („Übung Fr. Dr“, „Übung Fr. Dr. K“ und so weiter). Alle Dateien eines Ordners kommen jetzt in denselben Ordner.
 - Unter macOS werden Namen nicht mehr unnötig gekürzt, die Pfadgrenze von Windows gilt dort nicht. Bereits geladene Ordner mit gekürzten Namen bleiben bestehen und können gelöscht werden; die App lädt die Dateien beim nächsten Mal in die vollständigen Ordner.
+- Abhängigkeiten aktualisiert (`zip` 9.0.5, Updater-Plugin 2.14.1), damit bekannte Sicherheitshinweise zu `zip` erledigt sind.
 
 ## 1.3.1
 
