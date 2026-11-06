@@ -5,6 +5,7 @@
 - Sicherheit: Der Schutz vor Weiterleitungen in interne Netze erkennt jetzt auch IPv4-Adressen, die als IPv6 geschrieben sind (`::ffff:127.0.0.1`), und prüft beim Auflösen von Namen, ob sie auf interne Adressen zeigen. Der Moodle-Host selbst bleibt davon ausgenommen.
 - Sicherheit: Anfragen an Moodles Schnittstelle folgen keinen Weiterleitungen mehr.
 - Die Größenbegrenzung für Dateien gilt jetzt auch, wenn der Server keine Dateigröße mitschickt.
+- Der Update-Schlüssel wird gewechselt (neuer Schlüssel mit Passwort). Diese Version enthält den neuen öffentlichen Schlüssel und ist noch mit dem alten signiert, damit bestehende Installationen automatisch aktualisieren können.
 - Interne Verbesserungen am Build: klarere Job-Namen, Zeitgrenzen und eine Sperre gegen gleichzeitige Releases.
 
 ## 1.3.2

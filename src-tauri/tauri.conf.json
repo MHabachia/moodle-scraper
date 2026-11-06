@@ -60,7 +60,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlCNzcwRUYwMTgyNTY4NkQKUldSdGFDVVk4QTUzbTZvSStOSm1oVmtKR3NXemJXSTVTTVRhMXpnVlY1WUpIeENDSnRSb0FiWVAK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgxRkY3N0Q4N0MwNjg5N0UKUldSK2lRWjgySGYvZ1d2MTZidmJpWlZMb05Ld29Lbk5pM0RHVjlMT1UyZG1pUUtEcjBEUTJzTXYK",
       "endpoints": [
         "https://github.com/MHabachia/moodle-scraper/releases/latest/download/latest.json"
       ],
