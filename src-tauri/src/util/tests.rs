@@ -277,6 +277,30 @@ fn fit_components_limits_total_length() {
 }
 
 #[test]
+fn fit_components_keeps_files_of_one_folder_together() {
+    // Gleicher Ordner, Dateinamen unterschiedlicher Länge: die Ordnernamen müssen gleich bleiben
+    let dirs = || vec!["K".repeat(100), "Übung Fr. Dr. Karacoglu ".repeat(4).trim().to_string()];
+    let with = |file: &str| {
+        let mut c = dirs();
+        c.push(file.to_string());
+        fit_components(60, c, 240)
+    };
+    let names = [
+        "a.pdf",
+        "Mittellanger Dateiname zur Übung 3.pdf",
+        &format!("{}.pdf", "L".repeat(100)),
+    ];
+    let first = with(names[0]);
+    for n in names {
+        let fitted = with(n);
+        assert_eq!(fitted[..2], first[..2], "Ordner weichen ab bei {n}");
+        let total = 60 + fitted.iter().map(|c| c.chars().count() + 1).sum::<usize>();
+        assert!(total <= 240, "zu lang: {total}");
+        assert!(fitted.last().unwrap().ends_with(".pdf"));
+    }
+}
+
+#[test]
 fn fit_components_handles_extreme_base() {
     let comps = vec!["Ordner".to_string(), "x".repeat(200) + ".pdf"];
     let fitted = fit_components(230, comps, 240);
