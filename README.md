@@ -176,6 +176,7 @@ Die wichtigsten Punkte, Details in [SECURITY.md](SECURITY.md):
 
 - Moodle-Themes und -Versionen unterscheiden sich. Bei ungewöhnlichen Kursseiten kann etwas fehlen. Hilfreich ist dann ein anonymisiertes HTML der Kursseite als Issue.
 - Nicht unterstützt: Seiten, Bücher, Forenanhänge, eingebettete Videoplayer.
+- Sehr lange Pfade: Unter Windows werden Ordner- und Dateinamen gekürzt, damit der Pfad unter 240 Zeichen bleibt. Wähle dort einen kurzen Zielordner, etwa `C:\Moodle`. Unter macOS wird nichts gekürzt.
 - Fehlermeldungen aus dem Backend gibt es nur auf Deutsch, die Oberfläche ist zweisprachig.
 - Auto-Sync läuft nur, solange die App läuft (auch im Tray) und angemeldet ist.
 - Die Installer sind nicht mit einem bezahlten Zertifikat signiert, daher die Warnungen beim ersten Start. Die Update-Pakete sind mit einem eigenen Schlüssel signiert.

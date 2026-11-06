@@ -58,7 +58,7 @@ Im Zielordner liegt `.moodle-scraper-index.json`. Der Schlüssel eines Eintrags 
 
 ### Dateinamen und Pfade
 
-Jeder Name aus Moodle wird als Pfadbestandteil bereinigt: verbotene Zeichen weg, keine reservierten Windows-Namen, keine Punkte am Ende, Umlaute in einheitlicher Form (NFC), höchstens 100 Zeichen. Der ganze Pfad wird auf 240 Zeichen begrenzt, damit Windows ihn annimmt. Gleiche Namen im selben Ordner bekommen ein „(2)“. Die Ordnerstruktur kommt aus einem Muster (`{section}/{folder}` ist der Standard). Als Zielordner sind Systemordner und Laufwerkswurzeln gesperrt.
+Jeder Name aus Moodle wird als Pfadbestandteil bereinigt: verbotene Zeichen weg, keine reservierten Windows-Namen, keine Punkte am Ende, Umlaute in einheitlicher Form (NFC), höchstens 100 Zeichen. Unter Windows (und bei ZIP-Archiven) wird der ganze Pfad auf 240 Zeichen begrenzt, damit er angenommen wird; unter macOS gilt die weite Grenze von 1000 Zeichen, sodass dort praktisch nichts gekürzt wird. Gekürzt werden zuerst die Ordnernamen, und zwar nur nach den Ordnern und dem Zielpfad mit festem Platz für den Dateinamen, nie nach dem einzelnen Dateinamen. Sonst würden die Dateien eines Moodle-Ordners in mehrere unterschiedlich gekürzte Ordner zerfallen. Erst danach wird bei Bedarf der Dateiname gekürzt (die Endung bleibt). Gleiche Namen im selben Ordner bekommen ein „(2)“. Die Ordnerstruktur kommt aus einem Muster (`{section}/{folder}` ist der Standard). Als Zielordner sind Systemordner und Laufwerkswurzeln gesperrt.
 
 ## Frontend (`src`)
 
@@ -96,7 +96,7 @@ Jeder Name aus Moodle wird als Pfadbestandteil bereinigt: verbotene Zeichen weg,
 - **Parser** (`parse/tests.rs`): HTML-Beispiele aus `src-tauri/tests/fixtures/` für Moodle 3, Moodle 4, ein Classic-Theme, Ordner und Aufgaben.
 - **Download** (`download/tests.rs`): ein kleiner lokaler HTTP-Server prüft Cookie, Wiederholungen, Drosselung, Abbruch, Größenlimit, abgelaufene Session und den Delta-Vergleich.
 - **Ende zu Ende** (`download/e2e.rs`): ein nachgebautes Moodle (`testutil.rs`) mit Kurs, Ordner, Aufgabe und Link. Getestet werden Scan, Download als Ordner und als ZIP, mehrere Läufe nacheinander und das Fortsetzen nach abgelaufener Session.
-- **Hilfsfunktionen** (`util/tests.rs`): Pfade, Namen, URLs, Maskieren, Kalenderformat.
+- **Hilfsfunktionen** (`util/tests.rs`): Pfade, Namen (auch dass alle Dateien eines Ordners bei langen Namen im selben Ordner landen), URLs, Maskieren, Kalenderformat.
 - **Frontend** (Vitest): reine Logik, Komponenten, die Hooks mit nachgebautem Backend, und die Übersetzungen (gleiche Schlüssel und Platzhalter in beiden Sprachen).
 
 ## Build, CI und Release
