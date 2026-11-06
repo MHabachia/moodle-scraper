@@ -162,6 +162,12 @@ pub(super) async fn attempt(
         }
         written += chunk.len() as u64;
         shared.bytes.fetch_add(chunk.len() as u64, Ordering::Relaxed);
+        // Ohne Content-Length ließe sich die Obergrenze sonst umgehen
+        if opts.max_bytes.is_some_and(|max| written > max) {
+            drop(file);
+            rollback(written);
+            return Ok(Done::Skipped);
+        }
     }
     drop(file);
 

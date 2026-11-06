@@ -2253,7 +2253,7 @@ dependencies = [
 
 [[package]]
 name = "moodle-scraper"
-version = "1.3.2"
+version = "1.3.3"
 dependencies = [
  "fs4",
  "futures-util",

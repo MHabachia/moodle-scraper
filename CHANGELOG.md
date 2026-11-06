@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.3
+
+- Sicherheit: Der Schutz vor Weiterleitungen in interne Netze erkennt jetzt auch IPv4-Adressen, die als IPv6 geschrieben sind (`::ffff:127.0.0.1`), und prüft beim Auflösen von Namen, ob sie auf interne Adressen zeigen. Der Moodle-Host selbst bleibt davon ausgenommen.
+- Sicherheit: Anfragen an Moodles Schnittstelle folgen keinen Weiterleitungen mehr.
+- Die Größenbegrenzung für Dateien gilt jetzt auch, wenn der Server keine Dateigröße mitschickt.
+- Interne Verbesserungen am Build: klarere Job-Namen, Zeitgrenzen und eine Sperre gegen gleichzeitige Releases.
+
 ## 1.3.2
 
 - Behoben: Bei langen Kurs- und Ordnernamen landeten die Dateien eines Moodle-Ordners in mehreren unterschiedlich gekürzten Ordnern („Übung Fr. Dr“, „Übung Fr. Dr. K“ und so weiter). Alle Dateien eines Ordners kommen jetzt in denselben Ordner.

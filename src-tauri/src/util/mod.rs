@@ -10,7 +10,9 @@ mod text;
 mod time;
 
 pub use ics::build_ics;
-pub use net::{filename_from_url, is_private_host, normalize_url, parse_content_disposition, url_allowed};
+pub use net::{
+    filename_from_url, is_private_host, is_private_ip, normalize_url, parse_content_disposition, url_allowed,
+};
 pub use paths::{
     fit_components, is_forbidden_dest, render_dir_template, sanitize_component, sanitize_filename, unique_path,
     unique_rel, validate_export_path,

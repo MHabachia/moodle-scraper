@@ -69,8 +69,14 @@ pub fn is_private_host(host: &str) -> bool {
     if h == "localhost" || h.ends_with(".localhost") || h.ends_with(".local") || h.ends_with(".internal") {
         return true;
     }
-    match h.parse::<IpAddr>() {
-        Ok(IpAddr::V4(ip)) => {
+    h.parse::<IpAddr>().is_ok_and(is_private_ip)
+}
+
+/// Loopback, private, Link-Local- und ähnliche interne Adressen. IPv4-Adressen, die als IPv6 geschrieben
+/// sind (`::ffff:127.0.0.1`), werden wie die IPv4-Adresse behandelt.
+pub fn is_private_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(ip) => {
             let o = ip.octets();
             ip.is_loopback()
                 || ip.is_private()
@@ -79,14 +85,16 @@ pub fn is_private_host(host: &str) -> bool {
                 || ip.is_broadcast()
                 || (o[0] == 100 && (64..128).contains(&o[1]))
         }
-        Ok(IpAddr::V6(ip)) => {
+        IpAddr::V6(ip) => {
+            if let Some(v4) = ip.to_ipv4_mapped() {
+                return is_private_ip(IpAddr::V4(v4));
+            }
             let seg = ip.segments();
             ip.is_loopback()
                 || ip.is_unspecified()
                 || (seg[0] & 0xfe00) == 0xfc00 // fc00::/7
                 || (seg[0] & 0xffc0) == 0xfe80 // fe80::/10
         }
-        Err(_) => false,
     }
 }
 
