@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.4
+
+- Update-Pakete werden ab dieser Version mit dem neuen, passwortgeschützten Schlüssel signiert. Wer noch eine Version vor 1.3.3 hat, installiert diese Version einmal von Hand.
+
 ## 1.3.3
 
 - Sicherheit: Der Schutz vor Weiterleitungen in interne Netze erkennt jetzt auch IPv4-Adressen, die als IPv6 geschrieben sind (`::ffff:127.0.0.1`), und prüft beim Auflösen von Namen, ob sie auf interne Adressen zeigen. Der Moodle-Host selbst bleibt davon ausgenommen.
