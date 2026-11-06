@@ -159,9 +159,15 @@ pub fn is_forbidden_dest(p: &Path) -> bool {
     FORBIDDEN.iter().any(|f| s == *f || s.starts_with(&format!("{f}/")))
 }
 
+/// Platz, den die Ordnernamen für den Dateinamen übrig lassen müssen. Der Wert ist fest, damit alle
+/// Dateien eines Ordners dieselben (gekürzten) Ordnernamen bekommen. Würde er vom einzelnen
+/// Dateinamen abhängen, entstünden aus einem Moodle-Ordner mehrere unterschiedlich gekürzte Ordner.
+const FILE_RESERVE: usize = 64;
+
 /// Kürzt Pfadbestandteile so, dass `base_len + Pfad` höchstens `max_total` Zeichen hat
-/// (Windows: 260). Zuerst werden die längsten Ordnernamen gekürzt, zuletzt der Dateiname
-/// (Endung bleibt erhalten). Das letzte Element ist der Dateiname.
+/// (Windows: 260). Zuerst werden die längsten Ordnernamen gekürzt, und zwar nur nach
+/// Ordnernamen und `base_len`, nicht nach dem Dateinamen. Erst danach wird bei Bedarf der
+/// Dateiname gekürzt (Endung bleibt erhalten). Das letzte Element ist der Dateiname.
 pub fn fit_components(base_len: usize, mut comps: Vec<String>, max_total: usize) -> Vec<String> {
     const MIN_DIR: usize = 12;
     const MIN_STEM: usize = 12;
@@ -175,10 +181,17 @@ pub fn fit_components(base_len: usize, mut comps: Vec<String>, max_total: usize)
             t
         }
     };
+    if comps.len() < 2 {
+        return comps;
+    }
 
-    while total(&comps) > max_total && comps.len() > 1 {
-        let dirs = comps.len() - 1;
-        let Some((i, len)) = comps[..dirs]
+    // Ordner kürzen: mit einem Platzhalter fester Länge statt des echten Dateinamens
+    let file = comps.pop().unwrap_or_default();
+    let mut dirs = comps;
+    let probe_total =
+        |d: &[String]| base_len + d.iter().map(|x| x.chars().count() + 1).sum::<usize>() + FILE_RESERVE + 1;
+    while probe_total(&dirs) > max_total {
+        let Some((i, len)) = dirs
             .iter()
             .enumerate()
             .map(|(i, c)| (i, c.chars().count()))
@@ -187,22 +200,22 @@ pub fn fit_components(base_len: usize, mut comps: Vec<String>, max_total: usize)
         else {
             break;
         };
-        let excess = total(&comps) - max_total;
-        comps[i] = trim(&comps[i], (len - excess.min(len - MIN_DIR)).max(MIN_DIR));
+        let excess = probe_total(&dirs) - max_total;
+        dirs[i] = trim(&dirs[i], (len - excess.min(len - MIN_DIR)).max(MIN_DIR));
     }
 
+    let mut comps = dirs;
+    comps.push(file.clone());
     if total(&comps) > max_total {
-        if let Some(file) = comps.last().cloned() {
-            let (stem, ext) = match file.rsplit_once('.') {
-                Some((s, e)) if !s.is_empty() => (s.to_string(), format!(".{e}")),
-                _ => (file.clone(), String::new()),
-            };
-            let stem_len = stem.chars().count();
-            let excess = total(&comps) - max_total;
-            let keep = stem_len.saturating_sub(excess).max(MIN_STEM.min(stem_len));
-            let last = comps.len() - 1;
-            comps[last] = format!("{}{ext}", trim(&stem, keep));
-        }
+        let (stem, ext) = match file.rsplit_once('.') {
+            Some((s, e)) if !s.is_empty() => (s.to_string(), format!(".{e}")),
+            _ => (file.clone(), String::new()),
+        };
+        let stem_len = stem.chars().count();
+        let excess = total(&comps) - max_total;
+        let keep = stem_len.saturating_sub(excess).max(MIN_STEM.min(stem_len));
+        let last = comps.len() - 1;
+        comps[last] = format!("{}{ext}", trim(&stem, keep));
     }
     comps
 }

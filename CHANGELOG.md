@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Behoben: Bei langen Kurs- und Ordnernamen landeten die Dateien eines Moodle-Ordners in mehreren unterschiedlich gekürzten Ordnern („Übung Fr. Dr“, „Übung Fr. Dr. K“ und so weiter). Alle Dateien eines Ordners kommen jetzt in denselben Ordner.
+- Unter macOS werden Namen nicht mehr unnötig gekürzt, die Pfadgrenze von Windows gilt dort nicht. Bereits geladene Ordner mit gekürzten Namen bleiben bestehen und können gelöscht werden; die App lädt die Dateien beim nächsten Mal in die vollständigen Ordner.
+
 ## 1.3.1
 
 - Der Windows-Installer und die Deinstallation zeigen jetzt das App-Icon statt des Standard-Icons des Installers.

@@ -39,8 +39,10 @@ use tauri::{AppHandle, Manager, State};
 use zip::ZipWriter;
 
 const TMP_DIR: &str = ".moodle-scraper-tmp";
-/// Windows erlaubt 260 Zeichen pro Pfad, etwas Reserve bleibt.
-const MAX_PATH_TOTAL: usize = 240;
+/// Windows kennt eine Pfadgrenze von 260 Zeichen. Auf macOS ist sie mit 1024 so weit weg, dass
+/// Namen nicht gekürzt werden müssen. ZIP-Archive rechnen immer mit Windows.
+const MAX_PATH_WINDOWS: usize = 240;
+const MAX_PATH_OTHER: usize = 1000;
 /// Grobe Annahme, wo ein ZIP später entpackt wird.
 const ASSUMED_EXTRACT_BASE: usize = 80;
 
@@ -319,11 +321,18 @@ fn prepare_tasks(
         );
         comps.push(sanitize_filename(&item.filename));
         // Pfad kürzen, damit Windows ihn akzeptiert (beim ZIP rechnen wir mit einem typischen Zielordner)
-        let base_len = match layout {
-            Layout::Dir(base) => base.to_string_lossy().chars().count(),
-            Layout::Zip => ASSUMED_EXTRACT_BASE,
+        let (base_len, max_total) = match layout {
+            Layout::Dir(base) => (
+                base.to_string_lossy().chars().count(),
+                if cfg!(windows) {
+                    MAX_PATH_WINDOWS
+                } else {
+                    MAX_PATH_OTHER
+                },
+            ),
+            Layout::Zip => (ASSUMED_EXTRACT_BASE, MAX_PATH_WINDOWS),
         };
-        let comps = fit_components(base_len, comps, MAX_PATH_TOTAL);
+        let comps = fit_components(base_len, comps, max_total);
         let rel = unique_rel(&mut used, comps);
         let key = index_key(&course.id, &rel);
         let entry = index.get(&key).cloned();
