@@ -1,5 +1,40 @@
-Zentraler Benachrichtigungs-Workflow eingerichtet. Schickt ab jetzt Push-Nachrichten bei:
-- ✅ Erfolgreichen Builds
-- ❌ Fehlgeschlagenen Builds
-- 🤖 Dependabot & Security Updates
+name: Build Notifications
 
+on:
+  workflow_run:
+    workflows: ["Build"] 
+    types:
+      - completed
+
+jobs:
+  send-notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Werte Status und Kontext aus
+        id: info
+        run: |
+          # 1. Status bestimmen
+          if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+            echo "status_emoji=✅" >> $GITHUB_OUTPUT
+            echo "status_text=Erfolgreich" >> $GITHUB_OUTPUT
+          else
+            echo "status_emoji=❌" >> $GITHUB_OUTPUT
+            echo "status_text=Fehlgeschlagen" >> $GITHUB_OUTPUT
+          fi
+
+          # 2. Auslöser (Dependabot oder User) prüfen
+          if [ "${{ github.event.workflow_run.actor.login }}" = "dependabot[bot]" ]; then
+            echo "type_prefix=[🤖 DEPENDABOT - SECURITY UPDATE]" >> $GITHUB_OUTPUT
+          else
+            echo "type_prefix=[🚀 REPO UPDATE]" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sende Push-Nachricht an API
+        run: |
+          curl -X POST "${{ secrets.APPRISE_API_URL }}/notify/${{ secrets.APPRISE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "tag": "alerts",
+              "title": "${{ steps.info.outputs.status_emoji }} ${{ steps.info.outputs.type_prefix }}",
+              "body": "Repository: ${{ github.repository }}\nWorkflow: ${{ github.event.workflow_run.name }}\nErgebnis: ${{ steps.info.outputs.status_text }}\nAusgelöst durch: ${{ github.event.workflow_run.actor.login }}\n\nDetails einsehen: ${{ github.event.workflow_run.html_url }}"
+            }'
