@@ -1,0 +1,5 @@
+Zentraler Benachrichtigungs-Workflow eingerichtet. Schickt ab jetzt Push-Nachrichten bei:
+- ✅ Erfolgreichen Builds
+- ❌ Fehlgeschlagenen Builds
+- 🤖 Dependabot & Security Updates
+
