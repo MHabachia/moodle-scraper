@@ -5,9 +5,9 @@ use super::progress::Shared;
 use crate::parse::is_logged_in;
 use crate::session::{net_err, Ctx, SESSION_EXPIRED};
 use crate::types::DownloadItem;
-use crate::util::{ext_of, lock, url_allowed};
+use crate::util::{ext_of, is_html_response, lock, url_allowed};
 use futures_util::StreamExt;
-use reqwest::header::{CONTENT_TYPE, ETAG, LAST_MODIFIED, RETRY_AFTER};
+use reqwest::header::{ETAG, LAST_MODIFIED, RETRY_AFTER};
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::PathBuf;
@@ -100,7 +100,7 @@ pub(super) async fn attempt(
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string())
     };
-    let is_html = header(CONTENT_TYPE).is_some_and(|v| v.to_lowercase().starts_with("text/html"));
+    let is_html = is_html_response(resp.headers());
     let etag = header(ETAG);
     let modified = header(LAST_MODIFIED);
     let len = resp.content_length();

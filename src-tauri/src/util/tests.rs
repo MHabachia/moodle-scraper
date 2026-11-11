@@ -176,6 +176,20 @@ fn private_hosts_are_detected() {
 }
 
 #[test]
+fn html_responses_are_detected_by_content_type() {
+    use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
+    let with = |v: &'static str| {
+        let mut h = HeaderMap::new();
+        h.insert(CONTENT_TYPE, HeaderValue::from_static(v));
+        h
+    };
+    assert!(is_html_response(&with("text/html; charset=utf-8")));
+    assert!(is_html_response(&with("TEXT/HTML")));
+    assert!(!is_html_response(&with("application/pdf")));
+    assert!(!is_html_response(&HeaderMap::new()));
+}
+
+#[test]
 fn url_allowed_requires_same_origin() {
     let base = Url::parse("https://moodle.uni.de/").unwrap();
     let ok = Url::parse("https://moodle.uni.de/pluginfile.php/1/a.pdf").unwrap();
