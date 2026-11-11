@@ -1,40 +1,74 @@
-name: Build Notifications
+name: Benachrichtigungen
 
+# Schickt eine Push-Nachricht (Apprise, z. B. an Gotify) bei
+#  - jedem Release-Build (Erfolg, Fehler, Abbruch),
+#  - fehlgeschlagenen Tests auf main,
+#  - Pull Requests von Dependabot (Tests bestanden oder fehlgeschlagen).
+# Fremde Pull Requests lösen keine Nachricht aus.
+#
+# Secrets: APPRISE_API_URL und APPRISE_KEY. Für Dependabot-Läufe müssen sie zusätzlich unter
+# Settings > Secrets and variables > Dependabot angelegt werden, sonst bleibt die Nachricht aus.
 on:
   workflow_run:
-    workflows: ["Build"] 
-    types:
-      - completed
+    workflows: [Build, Tests]
+    types: [completed]
+
+# Der Workflow braucht keinen Zugriff auf das Repository
+permissions: {}
 
 jobs:
-  send-notification:
+  notify:
+    name: Nachricht senden
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      github.event.workflow_run.name == 'Build'
+      || (github.event.workflow_run.name == 'Tests'
+          && github.event.workflow_run.conclusion == 'failure'
+          && github.event.workflow_run.event == 'push'
+          && github.event.workflow_run.head_branch == 'main')
+      || (github.event.workflow_run.name == 'Tests'
+          && github.event.workflow_run.event == 'pull_request'
+          && github.event.workflow_run.actor.login == 'dependabot[bot]')
     steps:
-      - name: Werte Status und Kontext aus
-        id: info
+      - name: Nachricht senden
+        env:
+          APPRISE_API_URL: ${{ secrets.APPRISE_API_URL }}
+          APPRISE_KEY: ${{ secrets.APPRISE_KEY }}
+          # Werte aus dem Auslöser nie in das Skript einsetzen, nur über Umgebungsvariablen lesen
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          EVENT: ${{ github.event.workflow_run.event }}
+          REF: ${{ github.event.workflow_run.head_branch }}
+          ACTOR: ${{ github.event.workflow_run.actor.login }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          REPO: ${{ github.repository }}
         run: |
-          # 1. Status bestimmen
-          if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
-            echo "status_emoji=✅" >> $GITHUB_OUTPUT
-            echo "status_text=Erfolgreich" >> $GITHUB_OUTPUT
-          else
-            echo "status_emoji=❌" >> $GITHUB_OUTPUT
-            echo "status_text=Fehlgeschlagen" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          if [ -z "${APPRISE_API_URL:-}" ] || [ -z "${APPRISE_KEY:-}" ]; then
+            echo "::warning::Secrets für die Benachrichtigung fehlen, es wird nichts gesendet."
+            exit 0
           fi
 
-          # 2. Auslöser (Dependabot oder User) prüfen
-          if [ "${{ github.event.workflow_run.actor.login }}" = "dependabot[bot]" ]; then
-            echo "type_prefix=[🤖 DEPENDABOT - SECURITY UPDATE]" >> $GITHUB_OUTPUT
+          case "$CONCLUSION" in
+            success)   emoji="✅"; result="Erfolgreich" ;;
+            cancelled) emoji="⚪"; result="Abgebrochen" ;;
+            *)         emoji="❌"; result="Fehlgeschlagen" ;;
+          esac
+
+          if [ "$ACTOR" = "dependabot[bot]" ]; then
+            kind="Dependabot"
+          elif [ "$WORKFLOW" = "Build" ]; then
+            kind="Release-Build"
           else
-            echo "type_prefix=[🚀 REPO UPDATE]" >> $GITHUB_OUTPUT
+            kind="Tests auf main"
           fi
 
-      - name: Sende Push-Nachricht an API
-        run: |
-          curl -X POST "${{ secrets.APPRISE_API_URL }}/notify/${{ secrets.APPRISE_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "tag": "alerts",
-              "title": "${{ steps.info.outputs.status_emoji }} ${{ steps.info.outputs.type_prefix }}",
-              "body": "Repository: ${{ github.repository }}\nWorkflow: ${{ github.event.workflow_run.name }}\nErgebnis: ${{ steps.info.outputs.status_text }}\nAusgelöst durch: ${{ github.event.workflow_run.actor.login }}\n\nDetails einsehen: ${{ github.event.workflow_run.html_url }}"
-            }'
+          title="$emoji $kind: $result"
+          body=$(printf 'Repository: %s\nWorkflow: %s\nAuslöser: %s (%s)\nZweig/Tag: %s\n\n%s' \
+            "$REPO" "$WORKFLOW" "$ACTOR" "$EVENT" "$REF" "$RUN_URL")
+
+          payload=$(jq -n --arg title "$title" --arg body "$body" '{tag: "alerts", title: $title, body: $body}')
+          curl --silent --show-error --fail-with-body --max-time 20 \
+            -X POST -H "Content-Type: application/json" -d "$payload" \
+            "${APPRISE_API_URL}/notify/${APPRISE_KEY}"
