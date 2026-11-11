@@ -105,6 +105,14 @@ pub fn url_allowed(base: &Url, url: &Url) -> bool {
         && url.port_or_known_default() == base.port_or_known_default()
 }
 
+/// Ist die Antwort laut Content-Type eine HTML-Seite (und keine Datei)?
+pub fn is_html_response(headers: &reqwest::header::HeaderMap) -> bool {
+    headers
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|v| v.to_lowercase().starts_with("text/html"))
+}
+
 pub fn parse_content_disposition(cd: &str) -> Option<String> {
     if let Some(c) = RE_CD_STAR.captures(cd) {
         return Some(percent_decode_str(c[1].trim()).decode_utf8_lossy().to_string());

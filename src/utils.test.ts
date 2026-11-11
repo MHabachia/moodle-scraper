@@ -11,7 +11,6 @@ import {
   DEFAULT_SITE,
   DEFAULT_TYPES,
   migrateStored,
-  migrateV1,
   SETTINGS_VERSION,
   buildCourseLinks,
   formatBytes,
@@ -232,13 +231,6 @@ describe('settings migration', () => {
       expect(m.version).toBe(SETTINGS_VERSION);
       expect(typeof m.profiles).toBe('object');
     }
-  });
-
-  it('migrates the v1 flat format into the template profile', () => {
-    const m = migrateV1({moodleUrl: 'https://old.de/', destDir: '/d', zip: true, types: ['docs'], theme: 'light'});
-    expect(m.moodleUrl).toBe('https://old.de/');
-    expect(m.theme).toBe('light');
-    expect(m.profiles['']).toEqual({destDir: '/d', zip: true, types: ['docs']});
   });
 
   it('new site defaults are sensible', () => {

@@ -156,7 +156,6 @@ export function resolveSite(stored: Stored, host: string): SiteSettings {
 }
 
 const KEY = 'moodle-scraper-settings-v2';
-const OLD_KEY = 'moodle-downloader-settings-v1';
 
 /** Wandelt gespeicherte Daten beliebiger älterer Versionen in das aktuelle Schema um. */
 export function migrateStored(raw: unknown): Stored {
@@ -171,22 +170,10 @@ export function migrateStored(raw: unknown): Stored {
   };
 }
 
-/** Altes (v1) Format: flache Einstellungen -> Profil-Vorlage. */
-export function migrateV1(raw: Record<string, unknown>): Stored {
-  return migrateStored({
-    moodleUrl: raw.moodleUrl,
-    recentUrls: raw.recentUrls,
-    theme: raw.theme,
-    profiles: {'': {destDir: raw.destDir, zip: raw.zip, types: raw.types}},
-  });
-}
-
 export function loadSettings(): Stored {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return migrateStored(JSON.parse(raw));
-    const old = localStorage.getItem(OLD_KEY);
-    if (old) return migrateV1(JSON.parse(old));
   } catch {
     /* ignore */
   }

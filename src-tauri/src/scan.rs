@@ -7,9 +7,11 @@ use crate::parse::{
 use crate::scan_cache;
 use crate::session::{ajax, net_err, AppState, Ctx, SESSION_EXPIRED};
 use crate::types::{CourseContent, Item, LinkItem, Section};
-use crate::util::{ext_of, filename_from_url, now_ts, parse_content_disposition, redact, url_allowed};
+use crate::util::{
+    ext_of, filename_from_url, is_html_response, now_ts, parse_content_disposition, redact, url_allowed,
+};
 use futures_util::StreamExt;
-use reqwest::header::{CONTENT_DISPOSITION, CONTENT_LENGTH, CONTENT_TYPE};
+use reqwest::header::{CONTENT_DISPOSITION, CONTENT_LENGTH};
 use std::collections::HashSet;
 use tauri::{AppHandle, Manager, State, Url};
 
@@ -33,12 +35,7 @@ async fn probe_head(ctx: &Ctx, url: &Url) -> Option<Probe> {
     if !resp.status().is_success() {
         return None;
     }
-    let is_html = resp
-        .headers()
-        .get(CONTENT_TYPE)
-        .and_then(|v| v.to_str().ok())
-        .is_some_and(|v| v.to_lowercase().starts_with("text/html"));
-    if is_html {
+    if is_html_response(resp.headers()) {
         return None;
     }
     let size = resp
@@ -69,13 +66,7 @@ pub async fn probe(ctx: &Ctx, start: &Url) -> Result<Probe, String> {
         if !resp.status().is_success() {
             return Err(format!("HTTP {}", resp.status().as_u16()));
         }
-        let is_html = resp
-            .headers()
-            .get(CONTENT_TYPE)
-            .and_then(|v| v.to_str().ok())
-            .map(|v| v.to_lowercase().starts_with("text/html"))
-            .unwrap_or(false);
-        if is_html {
+        if is_html_response(resp.headers()) {
             let final_url = resp.url().clone();
             let html = resp.text().await.map_err(|e| e.to_string())?;
             if !is_logged_in(&html) && final_url.path().contains("login") {
