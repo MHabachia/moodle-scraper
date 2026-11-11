@@ -85,7 +85,7 @@ Die Einstellungen (Zielordner, Ordner oder ZIP, Dateitypen und mehr) gelten pro 
 | Updates | `tauri-plugin-updater`: signierte Pakete, `latest.json` im neuesten GitHub-Release |
 | Schnittstelle | Tauri-Befehle und Events; die TypeScript-Typen erzeugt `ts-rs` aus den Rust-Typen |
 | Tests | `cargo test` (Unit-, Integrations- und Ende-zu-Ende-Tests gegen ein nachgebautes Moodle), Vitest mit Testing Library |
-| CI/CD | GitHub Actions: `tests.yml` (Typen, Frontend- und Rust-Tests) und `build.yml` (Installer für macOS und Windows) |
+| CI/CD | GitHub Actions: `tests.yml` (Typen, Frontend- und Rust-Tests) `build.yml` (Installer für macOS und Windows) und `notify.yml` (Push-Nachricht über Apprise/Gotify) |
 
 ## Wie die App aufgebaut ist
 
@@ -130,7 +130,7 @@ src-tauri/                  Backend
   capabilities/, tauri.conf.json
 
 docs/architektur.md         Aufbau im Detail
-.github/workflows/          tests.yml, build.yml
+.github/workflows/          tests.yml, build.yml, notify.yml
 .github/ISSUE_TEMPLATE/     Vorlagen für Fehlermeldungen und Wünsche
 CONTRIBUTING.md, SECURITY.md, CHANGELOG.md, LICENSE
 ```
