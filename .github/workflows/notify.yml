@@ -1,13 +1,14 @@
 name: Benachrichtigungen
 
-# Schickt eine Push-Nachricht (Apprise, z. B. an Gotify) bei
+# Schickt eine Push-Nachricht direkt an einen Gotify-Server bei
 #  - jedem Release-Build (Erfolg, Fehler, Abbruch),
 #  - fehlgeschlagenen Tests auf main,
 #  - Pull Requests von Dependabot (Tests bestanden oder fehlgeschlagen).
 # Fremde Pull Requests lösen keine Nachricht aus.
 #
-# Secrets: APPRISE_API_URL und APPRISE_KEY. Für Dependabot-Läufe müssen sie zusätzlich unter
-# Settings > Secrets and variables > Dependabot angelegt werden, sonst bleibt die Nachricht aus.
+# Secrets: GOTIFY_URL (https://...) und GOTIFY_TOKEN (App-Token). Der Server muss aus dem Internet
+# erreichbar sein, denn die Läufe kommen von GitHub. Für Dependabot-Läufe müssen die Secrets zusätzlich
+# unter Settings > Secrets and variables > Dependabot angelegt werden, sonst bleibt die Nachricht aus.
 on:
   workflow_run:
     workflows: [Build, Tests]
@@ -33,8 +34,8 @@ jobs:
     steps:
       - name: Nachricht senden
         env:
-          APPRISE_API_URL: ${{ secrets.APPRISE_API_URL }}
-          APPRISE_KEY: ${{ secrets.APPRISE_KEY }}
+          GOTIFY_URL: ${{ secrets.GOTIFY_URL }}
+          GOTIFY_TOKEN: ${{ secrets.GOTIFY_TOKEN }}
           # Werte aus dem Auslöser nie in das Skript einsetzen, nur über Umgebungsvariablen lesen
           WORKFLOW: ${{ github.event.workflow_run.name }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
@@ -45,15 +46,19 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if [ -z "${APPRISE_API_URL:-}" ] || [ -z "${APPRISE_KEY:-}" ]; then
+          if [ -z "${GOTIFY_URL:-}" ] || [ -z "${GOTIFY_TOKEN:-}" ]; then
             echo "::warning::Secrets für die Benachrichtigung fehlen, es wird nichts gesendet."
             exit 0
           fi
+          case "$GOTIFY_URL" in
+            https://*) ;;
+            *) echo "::warning::GOTIFY_URL muss mit https:// beginnen, der Token wird nicht unverschlüsselt gesendet."; exit 0 ;;
+          esac
 
           case "$CONCLUSION" in
-            success)   emoji="✅"; result="Erfolgreich" ;;
-            cancelled) emoji="⚪"; result="Abgebrochen" ;;
-            *)         emoji="❌"; result="Fehlgeschlagen" ;;
+            success)   emoji="✅"; result="Erfolgreich";     priority=4 ;;
+            cancelled) emoji="⚪"; result="Abgebrochen";     priority=3 ;;
+            *)         emoji="❌"; result="Fehlgeschlagen";  priority=8 ;;
           esac
 
           if [ "$ACTOR" = "dependabot[bot]" ]; then
@@ -68,7 +73,8 @@ jobs:
           body=$(printf 'Repository: %s\nWorkflow: %s\nAuslöser: %s (%s)\nZweig/Tag: %s\n\n%s' \
             "$REPO" "$WORKFLOW" "$ACTOR" "$EVENT" "$REF" "$RUN_URL")
 
-          payload=$(jq -n --arg title "$title" --arg body "$body" '{tag: "alerts", title: $title, body: $body}')
+          payload=$(jq -n --arg title "$title" --arg message "$body" --argjson priority "$priority" \
+            '{title: $title, message: $message, priority: $priority}')
           curl --silent --show-error --fail-with-body --max-time 20 \
-            -X POST -H "Content-Type: application/json" -d "$payload" \
-            "${APPRISE_API_URL}/notify/${APPRISE_KEY}"
+            -X POST -H "Content-Type: application/json" -H "X-Gotify-Key: ${GOTIFY_TOKEN}" \
+            -d "$payload" "${GOTIFY_URL%/}/message"
