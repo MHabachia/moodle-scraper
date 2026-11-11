@@ -3,7 +3,8 @@ name: Benachrichtigungen
 # Schickt eine Push-Nachricht direkt an einen Gotify-Server bei
 #  - jedem Release-Build (Erfolg, Fehler, Abbruch),
 #  - fehlgeschlagenen Tests auf main,
-#  - Pull Requests von Dependabot (Tests bestanden oder fehlgeschlagen).
+#  - Pull Requests von Dependabot (Tests bestanden oder fehlgeschlagen),
+#  - einer Probenachricht, die sich unter Actions > Benachrichtigungen > Run workflow auslösen lässt.
 # Fremde Pull Requests lösen keine Nachricht aus.
 #
 # Secrets: GOTIFY_URL (https://...) und GOTIFY_TOKEN (App-Token). Der Server muss aus dem Internet
@@ -13,6 +14,13 @@ on:
   workflow_run:
     workflows: [Build, Tests]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      ergebnis:
+        description: Ergebnis der Probenachricht
+        type: choice
+        options: [success, failure, cancelled]
+        default: success
 
 # Der Workflow braucht keinen Zugriff auf das Repository
 permissions: {}
@@ -23,7 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: >-
-      github.event.workflow_run.name == 'Build'
+      github.event_name == 'workflow_dispatch'
+      || github.event.workflow_run.name == 'Build'
       || (github.event.workflow_run.name == 'Tests'
           && github.event.workflow_run.conclusion == 'failure'
           && github.event.workflow_run.event == 'push'
@@ -37,12 +46,12 @@ jobs:
           GOTIFY_URL: ${{ secrets.GOTIFY_URL }}
           GOTIFY_TOKEN: ${{ secrets.GOTIFY_TOKEN }}
           # Werte aus dem Auslöser nie in das Skript einsetzen, nur über Umgebungsvariablen lesen
-          WORKFLOW: ${{ github.event.workflow_run.name }}
-          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-          EVENT: ${{ github.event.workflow_run.event }}
-          REF: ${{ github.event.workflow_run.head_branch }}
-          ACTOR: ${{ github.event.workflow_run.actor.login }}
-          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          WORKFLOW: ${{ github.event.workflow_run.name || 'Probenachricht' }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion || inputs.ergebnis }}
+          EVENT: ${{ github.event.workflow_run.event || github.event_name }}
+          REF: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+          ACTOR: ${{ github.event.workflow_run.actor.login || github.actor }}
+          RUN_URL: ${{ github.event.workflow_run.html_url || format('{0}/{1}/actions/runs/{2}', github.server_url, github.repository, github.run_id) }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -61,7 +70,9 @@ jobs:
             *)         emoji="❌"; result="Fehlgeschlagen";  priority=8 ;;
           esac
 
-          if [ "$ACTOR" = "dependabot[bot]" ]; then
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            kind="Probenachricht"
+          elif [ "$ACTOR" = "dependabot[bot]" ]; then
             kind="Dependabot"
           elif [ "$WORKFLOW" = "Build" ]; then
             kind="Release-Build"
