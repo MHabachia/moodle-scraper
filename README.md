@@ -85,7 +85,7 @@ Die Einstellungen (Zielordner, Ordner oder ZIP, Dateitypen und mehr) gelten pro 
 | Updates | `tauri-plugin-updater`: signierte Pakete, `latest.json` im neuesten GitHub-Release |
 | Schnittstelle | Tauri-Befehle und Events; die TypeScript-Typen erzeugt `ts-rs` aus den Rust-Typen |
 | Tests | `cargo test` (Unit-, Integrations- und Ende-zu-Ende-Tests gegen ein nachgebautes Moodle), Vitest mit Testing Library |
-| CI/CD | GitHub Actions: `tests.yml` (Typen, Frontend- und Rust-Tests) `build.yml` (Installer für macOS und Windows) und `notify.yml` (Push-Nachricht über Apprise/Gotify) |
+| CI/CD | GitHub Actions: `tests.yml` (Typen, Frontend- und Rust-Tests) `build.yml` (Installer für macOS und Windows) und `notify.yml` (Push-Nachricht an Gotify) |
 
 ## Wie die App aufgebaut ist
 
